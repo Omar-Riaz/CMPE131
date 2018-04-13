@@ -1,0 +1,1 @@
+nvim -S! C:\Users\Owner\Desktop\Vim_sessions\ReMedia.vim

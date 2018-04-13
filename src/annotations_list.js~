@@ -1,0 +1,491 @@
+const React = require('react');
+const ReactDOM = require('react-dom');
+const annotationFunctionsClass = require('./annotationFunctions');
+const annotationModal = require('./annotations_modal.js');
+// import Autosuggest from 'react-autosuggest';
+
+//step 1: load the whole function --> goes through instantiation
+//step 2: use the instants to deal with the information
+module.exports = function (url) {
+
+	const annotationFunctions = annotationFunctionsClass();
+
+	const QuoteText = function(){
+		return(<div ref={quote=>{this.quote=quote}} className="quotes">{document.getSelection().toString()}</div>);
+	};
+	//The annotation environment holds the mode that the application is in: normal or compact
+	//Based on the mode, it then arranges the 
+	class AnnotationEnvironment extends React.Component{
+		constructor(props){
+			super();
+			//state contains current information
+			//selected contains information of the selected quote(s) before the operation occured
+			this.state = {
+				mode: "",
+				annotationObjects: [],
+					//	selected: {},				not a good enough reason to trigger a re-render --> changing props essentially necessiates re-creation of react components. You can instead use a refs approach to avoid the re-rendering issue
+				url: "",
+				operation: "",
+				newAnnotationText: "",	newAnnotationChannels: [],
+				quote: "",
+				channels: [], selectedChannels : [],
+				channelSearchvalue: '',
+			    channelSearchSuggestions: []
+
+			}
+			this.submitAnnotationEdit = this.submitAnnotationEdit.bind(this);
+			this.newAnnotation = this.newAnnotation.bind(this);	
+			this.deleteAnnotation = this.deleteAnnotation.bind(this);
+			this.editAnnotation = this.editAnnotation.bind(this);
+			this.updateState = this.updateState.bind(this);
+			this.switchAnnotationStyle = this.switchAnnotationStyle.bind(this);
+			this.findAnnotationChannels = this.findAnnotationChannels.bind(this);
+			this.performChannelSearch = this.performChannelSearch.bind(this);
+			
+			//this.refs.selected = {};
+				//this.refs.operation = "";
+		}
+		//wrapper for this.setState, which also updates the front-end in some ways such as passing down selection changes 
+		updateState(newState){
+			//change parent State	
+			let oldState = Object.create(this.state);		//create new object to prevent overwritting the old state
+			Object.assign(oldState, newState);				//assign only what we want to change.
+			this.setState(oldState);
+			//change child State indirectly, by passing down
+				//if(this.state.selected)this.state.selected.undoSelection();			
+				//if(this.selected)	this.selected = null;
+		}
+		
+		switchAnnotationStyle(){
+			if(this.selected.refs[this.selected.props.quote].style.background == "#c4c4c4")	this.selected.refs[this.selected.props.quote].style.background = "#FFFFFF";
+			else	this.selected.refs[this.selected.props.quote].style.background = "#c4c4c4";
+		}
+
+		componentDidMount(){
+
+            chrome.storage.sync.get(null, (quotesObj) => {
+				let quotes = [];
+				//the API gives us the quotes in object k/v form. Need to convert to an array of objects for the react state
+				console.log(quotesObj);
+				let quotesMap;
+				let channels = [];
+				if(quotesObj){
+					quotesMap = new Map(Object.entries(quotesObj));				//create a map to iterate through			
+				};
+				quotesMap.forEach((quote, quoteObj)=>{			//gather all quoteObjects that have the same url as given url
+					if(quoteObj.url === url){
+						let aQuoteObj = {
+							quote: quote
+						};
+						aQuoteObj.assign(quoteObj);		//only the quote requires a seperate assignment. Otherwise, all other properties will come dynamically
+						Object.assign(aQuoteObj, quoteObj);		//only the quote requires a seperate assignment. Otherwise, all other properties will come dynamically
+	
+						quotes.push(aQuoteObj);
+					}
+					if(quote === "channels")	channels = quoteObj;		//corner case: the key is the list of channels
+				});
+				let channeledAnnotations = [];	
+				//right now, we have acculumated all the annotations in one variable. 
+				//Now, make that a 2D array, which effectively stores the annotations in channels
+				for(let i = 0; i < channels.length; i++){
+					channeledAnnotations[i] = [];		//2d array definition
+				
+					//filling in all of the annotations with the given channel name
+					channeledAnnotations[i] = quotes.filter(annotation =>{annotation.channels.includes(this.state.channels[i])});
+
+					//NOTE: annotations have a one-one mapping with channels --> two annotations wiht the same quote are different if put into different channels
+				}
+				//initialize the state	
+				if (!chrome.runtime.lastError){
+					this.updateState({
+						mode: "list",
+						annotationObjects: channeledAnnotations,
+						url: url,
+						operation: "new",
+						channels: channels
+					});
+				}
+				else console.log(chrome.runtime.lastError);
+			});
+
+			//add an event listener to change the quote upon mouse up
+			document.addEventListener('mouseup', event=>{
+				console.log(document.getSelection().toString());
+				if(document.getSelection().toString() !== this.state.quote && document.getSelection().toString() !== "")	this.updateState({quote: document.getSelection().toString()});
+			});
+		}
+		//optimizations and error fixes with regards to updating and rendering
+		//PREVENTS BOTH RENDER AND BACKEND CHANGES FROM BEING MADE!!!
+		shouldComponentUpdate(nextProps, nextState){
+				//if(!nextState.selected.props)	return true;			//measure to still allow rendering without having any quotes
+				//if(!nextState.selected.props.quote && this.state.selected.props.quote &&
+				//		!nextState.operation && this.state.operation)	return false;
+		//	if(this.state.operation !== "edit" && nextState.operation === "edit") return false;			//when switching to edit mode for the first time, do not run update
+			if(nextState.operation === "" || this.state.newAnnotationText !==  nextState.newAnnotationText) return false;			//to prevent endless update loop and to optimize annotation updating. could be a source of bugs due to 
+			return true;
+		}	
+		//whenever the state changes, we reflect the change in the backend (for now, the chrome API)
+		componentDidUpdate(){
+			//chrome.storage.sync.set({this.state.annotationObjects});
+			//annotationFunctions.saveAnnotation(url, this.refs.selected.quoteText, this.refs.selected.annotationText);		//updates the chrome list
+				//annotationFunctions.saveAnnotations(this.state.annotationObjects);
+			let key = {};		
+			if(this.state.operation == "" || this.selected == null) return;		//we need a defined operation to proceed
+			let url = this.state.url;
+			let annotation = this.selected.props.annotation;
+			let quote = this.selected.props.quote;
+			let channels = this.selected.props.channels;
+			if(this.state.operation === "delete"){
+				chrome.storage.sync.remove(quote);
+			}else if(this.state.operation === "edit" || this.state.operation === "new"){
+					//key[url][quoteText].annotation = annotation;
+					//chrome.storage.sync.set(key[url][quote]);	//not just putting key as the parameter --> that may override all preivous annotations (needs to be verified)	
+				//annotationFunctions.saveAnnotation(this.state.url, quote, annotation);
+				annotationFunctions.saveQuote(this.state.url, quote, annotation, channels);
+				annotationFunctions.saveChannels(this.state.channels);
+			}
+			//not clearing refs.selected. ok?
+			//Once changes have been reflected in the backend, we can get rid of the operation
+			this.updateState({
+				operation: ""
+			});
+		}
+
+		//delete an annnotation, and return the deleted annotation
+		deleteAnnotation(element){
+				//this.refs.selected = element;
+				//this.refs.operation = "delete";
+			let index = this.selected.props.index;
+			let theChannel = this.state.annotationObjects[this.selected.props.channel];			//the proper channel, an array containing the channel of the annotation
+			//this.selected = element;
+			this.updateState({
+				operation: "delete",	
+				annotationObjects: Array.prototype.concat(theChannel.slice(0, index), theChannel.slice(index + 1, theChannel.length))
+			});
+		}
+		//the annotationList's only responsibility is to select the quote to edit. remaining parts of task are deffered to the modal
+		editAnnotation(element){
+				//this.refs.selected = element;
+				//this.refs.operation = "edit";
+				//		submitAnnotationEdit(element);			//change the edits that have been made
+			//this.selected = element;	
+		
+
+			//update state and indicate that the annotation is selected
+			this.updateState({
+				operation: "pre-edit"
+			});
+			this.switchAnnotationStyle();
+		}
+
+								//IMPLEMENTATION OF SEARCH NEEDS IMPROVEMENT
+		//searches inside annotationObjects for the specified channels
+		//runs:
+		//every time we need to submit an annotation
+		//and every time when a change is made to the annotation search bars
+		//returns the annotationObject array elements which correspond to the requested channels
+		findAnnotationChannels(theChannels){
+						//first, accumulate the channels that are found
+			let theAnnotationChannels = [];
+			//let matchingChannelIndeces = [];
+			for(let i = 0; i < theChannels.length; i++){
+				let theChannel = theChannels[i];
+				this.state.channels.find((channel, index)=>{if(channel === theChannel) {theAnnotationChannels.push(this.state.annotationObjects[index])}});
+			};			//Note: indeces in this.state.channels and the arrays in this.state.annotationObjects have the same index mappings
+						//next, make channels for any channel that was not found. "Make" simply means add to this.state.channels (updateState can simply add the new channels to this.state.annotationObjects)
+			updateState({channels: this.state.channels.concat(theAnnotationChannels)});
+			return theAnnotationChannels;
+		};
+		//perform a search on channels when we change the field for channel search
+		performChannelSearch(text){
+			//update the state for newAnnotationChannel
+			this.setState({channelSearchvalue: text});
+		};
+		//add a new Channel to annotationObjects
+		addNewChannel(){
+			
+		}
+		//add a new channel to the currently selected channels
+		appendChannel(){
+				
+		}	
+
+		newAnnotation(){
+			//wrap into the state variable annotationObjects
+			//console.log(this.state.newAnnotationText);
+			let htmlQuote = this.quote.innerHTML;
+			let quoteText = htmlQuote.slice(1, this.quote.innerHTML.length - 1);		//get rid of quotation marks
+			//let anAnnotationObject = annotationFunctions.getAnnotationObjModel(this.state.url, quoteText, this.state.newAnnotationText);	
+			//let anAnnotationObject = annotationFunctions.saveQuoteObjModel(this.state.url, quoteText, this.state.newAnnotationText);
+			let anAnnotationObject = {
+				quote: quoteText,
+				annotation: this.state.newAnnotationText,
+				url: this.state.url
+			};
+			let theChannels = this.state.newAnnotationChannels;
+			if(theChannels.length == 0)	theChannels = ["default"];
+			this.selected = {
+				props: {
+					quote: quoteText,
+					annotation: this.state.newAnnotationText,
+					channels: theChannels 
+				}	
+			};
+			let theAnnotationChannels = findAnnotationChannels(theChannels);			//access the quotes that are associated with the channels encompassing this new quote
+			let theAnnotationObject = theAnnotationChannels.concat(new Array(anAnnotationObject));
+			this.updateState({
+				operation: "new",
+				annotationObjects: theAnnotationObject 
+			});
+			//Whats the deal with sometimes using 0 to access, and sometimes not???
+			//well, the 0 is needed to access the data when it is stored in an array.
+			//This is independent of whether the data is coming from the chrome storage API or whether it is in a react state array
+			//this does noit apply to anAnnotationObject, because it is not an array
+		}
+
+		//submit an annotation edit
+		submitAnnotationEdit(){
+				//	this.refs.selected.quote = editedAnnotation.quote;		//change the UI state. backend will be automatically updated
+				//this.refs.selected.annotation = editedAnnotation.annotation;
+			
+			//clear prior newAnnotationText HTML <input> field
+			this.annotation.value = "";	
+			let index = this.selected.props.index;
+			let theChannel = this.state.annotationObjects[this.selected.props.channel];
+
+			//update the annotation that is selected, by creating a new collection of annotations and modifying it
+			//this.state.annotationObjects[index].annotation = this.state.newAnnotationText;
+			let newAnnotationObjects = Object.create(theChannel);
+			newAnnotationObjects[index].annotation = this.state.newAnnotationText;
+
+			this.updateState({
+				operation: "edit",
+				annotationObjects: newAnnotationObjects
+			});
+			
+			this.switchAnnotationStyle();
+		}
+		
+// 	// Autosuggest will call this function every time you need to update suggestions.
+//   // You already implemented this logic above, so just use it.
+//   onSuggestionsFetchRequested = ({ value }) => {
+//     this.setState({
+//       channelSearchSuggestions: getSuggestions(value)
+//     });
+//   };
+
+//   // Autosuggest will call this function every time you need to clear suggestions.
+//   onSuggestionsClearRequested = () => {
+//     this.setState({
+//       channelSearchSuggestions: []
+//     });
+//   };
+		
+//     const { value, suggestions } = this.state;
+
+//     // Autosuggest will pass through all these props to the input.
+//     const inputProps = {
+//       placeholder: 'Type a Channel to narrow your annotation search',
+//       value,
+//       onChange: this.onChange
+//     };
+
+// 		render(){
+// 				//2 parts: the editor or simple manager if in normal or compact mode, respectively; and the annotation List
+// 			const floatStyle={
+// 				float: "right"
+// 			};
+// 			let submitType;
+// 			if(this.state.operation === "new"){
+// 				submitType = this.newAnnotation; 
+// 			}else if(this.state.operation === "pre-edit"){
+// 				submitType = this.submitAnnotationEdit;
+// 			}
+// 			let filteredAnnotationObjects = this.state.annotationObjects.map(annotationObject=>{
+// 				this.state.selectedChannels(selectedChannel=>{
+// 					if(annotationObject.channels.includes(selectedChannel)) return annotationObject;
+// 				});
+// 			});
+
+// const channelSuggestions = this.state.channels;
+
+// // Teach Autosuggest how to calculate suggestions for any given input value.
+// const getSuggestions = value => {
+//   const inputValue = value.trim().toLowerCase();
+//   const inputLength = inputValue.length;
+
+//   return inputLength === 0 ? [] : channelSuggestions.filter(channel =>
+//     channel.toLowerCase().slice(0, inputLength) === inputValue
+//   );
+// };
+
+// // When suggestion is clicked, Autosuggest needs to populate the input
+// // based on the clicked suggestion. Teach Autosuggest how to calculate the
+// // input value for every given suggestion.
+// const getSuggestionValue = channel=> channel;
+
+// // Use your imagination to render suggestions.
+// const renderSuggestion = channel=> (
+//   <div>
+//     {channel}
+//   </div>
+// );
+
+// class Example extends React.Component {
+//   constructor() {
+//     super();
+
+//     // Autosuggest is a controlled component.
+//     // This means that you need to provide an input value
+//     // and an onChange handler that updates this value (see below).
+//     // Suggestions also need to be provided to the Autosuggest,
+//     // and they are initially empty because the Autosuggest is closed.
+//     this.state = {
+//       value: '',
+//       suggestions: []
+//     };
+//   }
+
+//   onChange = (event, { newValue }) => {
+//     this.setState({
+//       value: newValue
+//     });
+//   };
+
+//   // Autosuggest will call this function every time you need to update suggestions.
+//   // You already implemented this logic above, so just use it.
+//   onSuggestionsFetchRequested = ({ value }) => {
+//     this.setState({
+//       suggestions: getSuggestions(value)
+//     });
+//   };
+
+//   // Autosuggest will call this function every time you need to clear suggestions.
+//   onSuggestionsClearRequested = () => {
+//     this.setState({
+//       suggestions: []
+//     });
+//   };
+
+  render() {
+    // const { value, suggestions } = this.state;
+
+    // // Autosuggest will pass through all these props to the input.
+    // const inputProps = {
+    //   placeholder: 'Type a programming language',
+    //   value,
+    //   onChange: this.onChange
+    		const floatStyle={
+				float: "right"
+			};
+			let submitType;
+			if(this.state.operation === "new"){
+				submitType = this.newAnnotation; 
+			}else if(this.state.operation === "pre-edit"){
+				submitType = this.submitAnnotationEdit;
+			}
+			let filteredAnnotationObjects = this.state.annotationObjects.map(annotationObject=>{
+				this.state.selectedChannels(selectedChannel=>{
+					if(annotationObject.channels.includes(selectedChannel)) return annotationObject;
+				});
+			});
+
+			return(
+				<div>	
+					<div ref={quote=>{this.quote=quote}} className="quotes">{this.state.quote}</div>
+					<div>Your Annotation: </div><input ref={annotation=>{this.annotation=annotation}} className="annotation" onChange={evt=>{this.setState({newAnnotationText: evt.target.value})}} onKeyPress={evt=>{if(evt.key == "Enter") submitType();}} onClick={evt=>{evt.target.select();}} type="text"></input>
+					<div>Annotation Channels: </div><input className="annotation" onChange={evt=>{this.setState({newAnnotationChannels: evt.target.value})}} onKeyPress={evt=>{if(evt.key == "Enter") submitType();}} onClick={evt=>{evt.target.select();}} type="text"></input>
+					<div style={floatStyle} className="glyphicon glyphicon-circle-arrow-right" onClick={submitType}></div>	
+					<AnnotationList channels={this.state.channels} deleteAnnotation={element=>{this.selected=element; this.deleteAnnotation(element);}} url={this.state.url} annotationObjects={filteredAnnotationObjects} editAnnotation={element=>{this.selected=element; this.editAnnotation(element);}} key="annotationList"/>
+					<div>Channel Search: <input className="annotation" onChange={evt=>{this.performChannelSearch(evt.target.value);}} onKeyPress={evt=>{if(evt.key == "Enter") submitType();}} onClick={evt=>{evt.target.select();}} type="text"></input></div>
+				</div>
+			);
+		}
+	}
+
+
+    class AnnotationList extends React.Component {
+
+        constructor(props) {
+            super();
+		}
+
+		/*
+		shouldComponentUpdate(nextProps, nextState){
+			if(this.state.!= nextProps.)	return false;		//do not trigger a re-render if the only change is a change in the channel state
+																				//also ensures that rendering only happens when the channelToAdd are identical
+			return true;
+		}*/
+
+        render() {               //rendering a single annotationObject for each element in annotationObjects
+			let annotationsToRender = [];
+			if(this.props.annotationObjects != null){
+				let quotes = [];	
+				if(this.props.annotationObjects.length > 0){
+					for(let j = 0; j < this.props.annotationObjects.length; j++){
+						this.props.annotationObjects[j].map((quoteObj, index) =>{
+                    		console.log(quoteObj);
+							annotationsToRender.push(<AnnotationElement key={quoteObj.quote} channel={quoteObj.channels} index={index} editAnnotation={this.props.editAnnotation} deleteAnnotation={this.props.deleteAnnotation} quote={quoteObj.quote} annotation={quoteObj.annotation}/>);
+						});
+					}
+				}
+				//console.log(this.props.url);
+			//	console.log(this.props.annotationObjects[0]);
+			/*	quoteObjMap.forEach((quote, annotationObject) =>{			
+					console.log(annotationObject);
+					annotationsToRender.push(<AnnotationElement key={quote} quote={quote} annotation={annotationObject.annotation}/>);
+				});*/
+			/*	quotes.map(quote=>{
+					console.log(quote);
+					console.log(theQuoteannotation);
+					annotationsToRender.push(<AnnotationElement key={quote} quote={quote} annotation={quote.annotation}/>);
+				});	  */
+			}
+
+			return (
+				<div>
+					{annotationsToRender}
+				</div>
+            );
+        }
+    }
+
+
+    class AnnotationElement extends React.Component {
+
+        constructor() {
+			super();
+			this.editAnnotation = this.editAnnotation.bind(this);
+			this.deleteAnnotation = this.deleteAnnotation.bind(this);
+        };
+			/*shouldComponentUpdate(){
+				if(this.state.selected == true)	return true;
+				else return false;
+		}*/
+		//ref callbacks to assign the selected instance variable in parent. In future, need to make the ref in the div a callback
+		editAnnotation(){
+			this.props.editAnnotation(this);
+		};
+		deleteAnnotation(){
+			this.props.deleteAnnotation(this);
+		};
+		
+		render() {
+            return (
+					<div className="container" style={this.props.elementStyling} ref={this.props.quote}>
+   						<div className="quotes">"{this.props.quote}"</div>
+						<div className="annotations">&emsp;{this.props.annotation}</div>
+						<div className="glyphicon glyphicon-trash" onClick={this.deleteAnnotation}></div>&emsp;
+						<div className="glyphicon glyphicon-pencil" onClick={this.editAnnotation}></div>
+						<div>#{this.props.channel}</div>
+         	 	   </div>
+            );
+        }
+    }
+	
+    ReactDOM.render(
+		<AnnotationEnvironment/>,
+        document.getElementsByClassName('annotationList')[0]
+    );
+
+};
