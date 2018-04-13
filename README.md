@@ -1,9 +1,11 @@
-# ReMedia
-Chrome Extension for the ReMedia application
+Group 4 for CMPE131. 
+
+Project Name: ReMedia
 
 
-Version 1.0
 
--text selection and annotation
+Schedule
 
--annotations saved and displayed as they are made
+April 17 - Front-end and Back-end complete as per the requirements documentation
+April 19 - 5 test cases complete
+May 2 - Project Finalized
