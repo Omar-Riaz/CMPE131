@@ -60,12 +60,12 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 12);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 16:
+/***/ 12:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -317,8 +317,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             //   chrome.storage.sync.set(items, result=>{console.log("saved")});
             // });
             let storageItem = {
-                [quoteText]: { annotation: annotationText, channels: channels }
+                [quoteText]: {
+                    annotation: annotationText,
+                    channels: channels,
+                    quote: quoteText
+                }
             };
+            console.log(storageItem);
             chrome.storage.sync.set(storageItem);
         },
 

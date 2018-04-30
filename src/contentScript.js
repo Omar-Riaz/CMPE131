@@ -12,8 +12,8 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({content: "creating modal"});
 
 		//for testing purposes!
-		chrome.storage.sync.clear();
-		console.log("chrome storage cleared");
+		// chrome.storage.sync.clear();
+		// console.log("chrome storage cleared");
 		
 	   /* var jQuery = document.createElement('script');
 	    //jQuery.type = 'text/javascript';

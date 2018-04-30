@@ -51,7 +51,7 @@
     background-color: #fefefe;
     margin: 15% auto; /* 15% from the top and centered */
     border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
+    width: auto; /* Could be more or less, depending on screen size */
 }
 
 .miniModal-content {
@@ -86,4 +86,18 @@
 
 .annotation{
     font-size: 8px;
+}
+
+.channel{
+    border: 1px solid #000000;
+    border-radius: 4px;
+}
+
+.glyphicon{
+
+}
+
+.glyphicon:hover{
+    border: 10px;
+    border-color: black;
 }

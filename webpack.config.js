@@ -4,6 +4,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const WebpackNotifierPlugin = require('webpack-notifier');
+const ChromeExtensionReloader  = require('webpack-chrome-extension-reloader');
 
 module.exports = {
   // Entry files for our popup and background pages
@@ -103,6 +104,7 @@ module.exports = {
       { from: './src/manifest.json' },
       { context: './src/assets', from: 'icon-**', to: 'assets' }
     ]),
-      new WebpackNotifierPlugin({alwaysNotify: true})
+      new WebpackNotifierPlugin({alwaysNotify: true}),
+      new ChromeExtensionReloader()
   ]
 }

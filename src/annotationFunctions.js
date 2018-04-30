@@ -247,8 +247,13 @@ getSavedAnnotations: function(url) {
     //   chrome.storage.sync.set(items, result=>{console.log("saved")});
     // });
     let storageItem = {
-      [quoteText]: {annotation: annotationText, channels: channels}
-    }
+      [quoteText]: {
+        annotation: annotationText,
+        channels: channels,
+        quote: quoteText
+      }
+    };
+    console.log(storageItem);
     chrome.storage.sync.set(storageItem);
   },
 

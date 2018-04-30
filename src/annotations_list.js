@@ -9,15 +9,31 @@ class annotationMap extends Map<String, Array> {
   constructor(obj){
     super(obj);
   }
-  add(key:String, value){
-    this.set(key, this.get(key) == null ? new Array(value) : this.get(key).concat(value));
+  //set a collection of keys to a value obj
+  add(keys:Array<String>, value){
+  	keys.map(key=>{						//Bad to do this??? Something about setting a collection in a loop????
+      this.set(key, this.get(key) == null ? new Array(value) : this.get(key).concat(value));
+		});
+  	return this;
   }
-  deleteAnnotation(keys:Array, field:String){
-    channels.map(channel=>{
-      this.set(channel, this.valueOf(key).filter(elem=>elem.quote != field));
+  deleteAnnotation(keys:Array<String>, field:String){
+    keys.map(channel=>{
+      this.set(channel, this.get(channel).filter(elem=>elem.quote != field));
     });
+    return this;
   }
+  editAnnotation(keys:Array<String>, field:String, newField:String){
+    keys.map(channel=>{
+      this.get(channel)[this.get(channel).findIndex(elem=>elem.quote == field)].annotation = newField;
+    });
+    return this;
+  }
+  keysAsArray() {
+    return Array.from(this.keys());
+  }
+
 }
+
 
 function isEmptyObject(obj){
   return obj == null || (Object.keys(obj).length === 0 && obj.constructor === Object)
@@ -30,6 +46,7 @@ export default function (urlArg) {
 var url = urlArg; 
 	
 if (!String.prototype.trim) {
+
 	String.prototype.trim = function () {
 		return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 	};
@@ -74,8 +91,8 @@ class ChannelSearchBar extends React.Component {
 	
 	// Use your imagination to render suggestions.
 	renderSuggestion(suggestion){
-		return(	
-			<div>
+		return(
+			<div className="list-group-item">
 				{suggestion}
 			</div>
 		);
@@ -89,13 +106,10 @@ class ChannelSearchBar extends React.Component {
 	
 
 	onChange(event, obj){
-	  //this.setState({
-      //  value: newValue
-	  //});
 		this.updateState({
 			value: obj.newValue
 		});
-		//		this.onSuggestionsFetchRequested(evt.target.value);
+		this.props.onChange(event);					//call any onChange event that was passed as a prop.
 	};
 
 	
@@ -129,7 +143,7 @@ class ChannelSearchBar extends React.Component {
   		    placeholder: 'Type a channel', 
   		    value,
   		    onChange: this.onChange,
-			onClick: evt=>{evt.target.select();}
+					onClick: evt=>{evt.target.select();}
   		  };
 			
 		//onClick={evt=>{evt.target.select();}}>
@@ -139,7 +153,7 @@ class ChannelSearchBar extends React.Component {
   		      suggestions={suggestions}
   		      onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
   		      onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-			  alwaysRenderSuggestions={true}
+			  		alwaysRenderSuggestions={true}
   		      getSuggestionValue={this.getSuggestionValue}
   		      renderSuggestion={this.renderSuggestion}
   		      inputProps={inputProps}
@@ -166,14 +180,16 @@ class ChannelSearchBar extends React.Component {
 			//an entry from newAnnoationChannels is transferred over to selectedChannels upon approval of a new channel name/of an already exisitng channel
 			this.state = {
 				mode: "",
-				url: url,
 				annotationObjects: new annotationMap(),
-				annotations: {},
-				operation: "",
-				newAnnotationText: "",	newAnnotationChannels: ["default"],
-				quote: "",
-				selectedChannels : ["default"]
+				selectedChannels : ["default"],
+				quote: ""
 			};
+			// this.quote = "";
+			// this.newAnnotationText = "";
+			this.newAnnotationChannels = [];
+			this.url = url;
+			this.prevOperation = "";
+			this.operation = "";
 			this.submitAnnotationEdit = this.submitAnnotationEdit.bind(this);
 			this.newAnnotation = this.newAnnotation.bind(this);	
 			this.deleteAnnotation = this.deleteAnnotation.bind(this);
@@ -201,24 +217,29 @@ class ChannelSearchBar extends React.Component {
 
 		componentDidMount(){
 			let annotationObjects = new annotationMap();
-			chrome.storage.sync.clear(()=>{
-				console.log("storage cleared");
-			});
 			//get all the annotations
       //STORAGE: aQuote: {obj containing annotation, channels, etc.}
-			chrome.storage.sync.get(null, (storage) => {
-			  if(isEmptyObject(storage)){
+      // chrome.storage.sync.clear();
+      chrome.storage.sync.get(null, (storage) => {
+			  if(!isEmptyObject(storage)){
           Object.entries(storage).map(storageItem => {
+          	console.log(storageItem);
             // storageItem.channels.map(channel => {
             //   annotationObjects.add(channel, storageItem);
             // });
-            storageItem[1].channels.map(channel =>{
-              annotationObjects.add(channel, storageItem[1])
-            })
+            // storageItem[1].channels.map(channel =>{							//[1] to access the values of the [key,val] array element
+            //   annotationObjects.add(channel, storageItem[1])
+            // })
+						annotationObjects.add(storageItem[1].channels, storageItem[1]);         		//[1] to access the values of the [key,val] array element
           });
         }
-			});
-			this.updateState({annotationObjects: annotationObjects});
+        this.updateState({annotationObjects: annotationObjects});
+			  this.operation = "new";
+      });
+      // annotationObjects.add(["Family", "Friends"], {quote: "list", annotation: "cool3", channels: ["Family", "Friends"]});
+
+
+      // this.updateState({annotationObjects: annotationObjects, operation: "new"});
 			//the environment registers an event for selecting text
 			document.addEventListener('mouseup', event=>{
 				let selection = document.getSelection().toString().trim();
@@ -235,107 +256,123 @@ class ChannelSearchBar extends React.Component {
 		}	
 		//whenever the state changes, we reflect the change in the backend (for now, the chrome API)
 		componentDidUpdate(){
-			let key = {};		
-			if(this.state.operation == "" || this.selected == null) return;		//we need a defined operation to proceed
-			let url = this.state.url;
+			let key = {};
+			if(this.operation === "" || this.selected == null) return;		//we need a defined operation to proceed, and an annotation to perform said operation on
+			let url = this.url;
 			let annotation = this.selected.props.annotation;
 			let quote = this.selected.props.quote;
 			let channels = this.selected.props.channels;
-			if(this.state.operation === "delete"){
+			if(this.operation === "delete"){
 				chrome.storage.sync.remove(quote);
-			}else if(this.state.operation === "edit" || this.state.operation === "new"){
+			}else if(this.operation === "edit" || this.operation === "new"){
 				annotationFunctions.save(quote, annotation, channels);		//save the annotation in storage API with specified properties
 			}
+			this.operation = this.prevOperation;
 		}
 
 		//delete an annnotation, and return the deleted annotation
 		deleteAnnotation(element){
-      let newAnnotationMap = new annotationMap(this.state.annotationObjects);
-      newAnnotationMap.deleteAnnotation(this.selected.props.channels, this.selected.props.quote);
+      let newAnnotationMap = new annotationMap(this.state.annotationObjects).deleteAnnotation(this.selected.props.channels, this.selected.props.quote);;
 			// this.updateState({
 			// 	operation: "delete",
 			// 	annotationObjects:
       // 			// });
-      this.setState({
-        operation: "delete",
+			this.prevOperation = this.operation;
+      this.operation = "delete";
+			this.setState({
         annotationObjects: newAnnotationMap
       });
 		}
 
 		//the annotationList's only responsibility is to select the quote to edit. remaining parts of task are deffered to the modal
 		editAnnotation(element){
-		  this.updateState({
-				operation: "pre-edit"
-			});
+      //clear prior newAnnotationText HTML <input> field
+      this.annotation.innerHTML = "";
+      this.prevOperation = this.operation;
+      this.operation = "pre-edit";
 			this.switchAnnotationStyle();
 		}
 
-
+		//in future, props can be created by invoking AnnotationList method for converting annotation to rendered annotation?.
 		newAnnotation(){
 		  let newAnnotation = {
-		    quote: this.state.quote,
-        annotation: this.state.newAnnotationText,
-		    channels: this.state.newAnnotationChannels,
-      };
-		  let newAnnotationMap = new annotationMap(this.state.annotationObjects).add();
+		  	quote: this.state.quote,
+				annotation: this.annotation.value,
+				channels: this.newAnnotationChannels
+			};
+			let newAnnotationMap = new annotationMap(this.state.annotationObjects).add(newAnnotation.channels, newAnnotation);
+      this.selected = {
+      	props: newAnnotation
+			};
+			console.log("newAnnotationMap: " + newAnnotationMap);
       this.setState({
-        operation: "new",
         annotationObjects: newAnnotationMap
       });
+      this.newAnnotationChannels = newAnnotationMap.keysAsArray();
+      this.prevOperation = this.operation;
+      this.operation = "new";
       console.log("new annotation added");
 		}
 
 		//submit an annotation edit
 		submitAnnotationEdit(){
-			//clear prior newAnnotationText HTML <input> field
-			this.annotation.value = "";	
-			let index = this.selected.props.index;
-			let theChannels = this.state.annotationObjects[this.selected.props.channel];
-			//update the annotation that is selected, by creating a new collection of annotations and modifying it
-			//this.state.annotationObjects[index].annotation = this.state.newAnnotationText;
-			let newAnnotationObjects = Object.create(theChannel);
-			newAnnotationObjects[index].annotation = this.state.newAnnotationText;
+			// let index = this.selected.props.index;
+			// let theChannels = this.state.annotationObjects[this.selected.props.channel];
+			// //update the annotation that is selected, by creating a new collection of annotations and modifying it
+			// //this.state.annotationObjects[index].annotation = this.newAnnotationText
+			//;
+			// let newAnnotationObjects = Object.create(theChannel);
+			// newAnnotationObjects[index].annotation = this.newAnnotationText
+			//;
+			let newAnnotationMap = new annotationMap(this.state.annotationObjects).editAnnotation(this.selected.props.channels, this.selected.props.quote, this.annotation.value);
 			this.updateState({
-				operation: "edit",
-				annotationObjects: newAnnotationObjects
-			});
+				annotationObjects: newAnnotationMap,
+      });
+			this.newAnnotationChannels = newAnnotationMap.keysAsArray();
+			this.prevOperation = this.operation;
+			this.operation = "edit";
 			this.switchAnnotationStyle();
 		}
 		
 		submitType(action){
 			//operations that happen when submitting an annotation --> happens for making new Annotations and editing annotations
-			if(this.state.quote === "" || this.state.newAnnotationText === "")  return;
+			if(this.state.quote === "" || this.annotation.value === "")  return;
 
 			if(action == "new"){
-				this.newAnnotation();
+					this.newAnnotation();
 			  }else if(action == "pre-edit"){
-				this.submitAnnotationEdit();
+					this.submitAnnotationEdit();
 			  }
 		};
 
 
-  render() {
-    // const { value, suggestions } = this.state;
+		//utility functions used in render()
 
-    // // Autosuggest will pass through all these props to the input.
-    // const inputProps = {
-    //   placeholder: 'Type a programming language',
-    //   value,
-    //   onChange: this.onChange
-    		const floatStyle={
+    	keyPress = evt=>{
+    		if(evt.key == "Enter") this.submitType(this.operation);
+    	};
+
+    	searchBarChange = evt=>{
+    		let val:String = evt.target.value;
+    		this.newAnnotationChannels = val.split(/,\s*/).filter(elem=>elem.length > 0);
+    	};
+
+  render() {
+
+  	const floatStyle={
 				float: "right"
 			};
-	  /*
-<!--<input className="annotation" onChange={evt=>{this.setState({newAnnotationChannels: evt.target.value})}} onKeyPress={evt=>{if(evt.key == "Enter") submitType();}} onClick={evt=>{evt.target.select();}} type="text"></input>-->
-					<!--<div><input placeholder="Search for an annotation by channel" className="annotation" onChange={evt=>{this.performChannelSearch(evt.target.value);}} onKeyPress={evt=>{if(evt.key == "Enter") this.submitType();}} onClick={evt=>{evt.target.select();}} type="text"></input></div> -->
-	  */
+
+  	console.log(this.state.annotationObjects);
+  	console.log(this.state.quote);
+
 			return(
 				<div className="annotationEnvironment">
-					<div ref={quote=>{this.quote=quote}} className="quotes">{this.state.quote}</div>
+					<div className="quotes">{this.state.quote}</div>
 					<div>Annotation Channels: </div>
-					<ChannelSearchBar suggestions={new Array("Default", "Friends", "Family")} onKeyPress={evt=>{if(evt.key == "Enter") this.submitType("new");}}> </ChannelSearchBar>
-					<div>Your Annotation: </div><input ref={annotation=>{this.annotation=annotation}} className="annotation" onChange={evt=>{this.setState({newAnnotationText: evt.target.value})}} onKeyPress={evt=>{if(evt.key == "Enter") this.submitType("new");}} onClick={evt=>{evt.target.select();}} type="text"></input>
-					<AnnotationList deleteAnnotation={element=>{this.selected=element; this.deleteAnnotation(element);}} url={this.state.url} annotationObjects={this.state.annotationObjects} editAnnotation={element=>{this.selected=element; this.editAnnotation(element);}} key="annotationList"/>
+					<ChannelSearchBar suggestions={this.state.annotationObjects.keysAsArray()} onKeyPress={this.keyPress} onChange={this.searchBarChange}></ChannelSearchBar>
+					<div>Your Annotation: </div><input ref={annotation=>{this.annotation=annotation}} className="annotation" onKeyPress={this.keyPress} onClick={evt=>{evt.target.select();}} type="text"></input>
+					<AnnotationList deleteAnnotation={element=>{this.selected=element; this.deleteAnnotation(element);}} url={this.url} annotationObjects={this.state.annotationObjects} editAnnotation={element=>{this.selected=element; this.editAnnotation(element);}} key="annotationList"/>
 				</div>
 			);
 		}
@@ -350,12 +387,14 @@ class ChannelSearchBar extends React.Component {
 
         render() {               //rendering a single annotationObject for each element in annotationObjects
           let annotationsToRender = [];
-          console.log(this.props.annotationObjects);
           if(!isEmptyObject(this.props.annotationObjects) && this.props.annotationObjects.size > 0){
+          	let keys = new Set();																				//for rendering only one annotation if there are multiple channels specified
             this.props.annotationObjects.forEach((value, channel) => {
-              console.log(value);
               value.map(annotation=>{
-                annotationsToRender.push(<AnnotationElement key={annotation.quote} quote={annotation.quote} annotation={annotation.annotation} channels={annotation.channels}/>);
+                if(!keys.has(annotation.quote)){
+                  annotationsToRender.push(<AnnotationElement editAnnotation={element=>{this.props.editAnnotation(element)}} deleteAnnotation={element=>{this.props.deleteAnnotation(element)}} key={annotation.quote} quote={annotation.quote} annotation={annotation.annotation} channels={annotation.channels}/>);
+									keys.add(annotation.quote);
+                }
               });
             });
           }
@@ -388,16 +427,20 @@ class ChannelSearchBar extends React.Component {
 		deleteAnnotation(){
 			this.props.deleteAnnotation(this);
 		};
-		
+
 		render() {
             return (
 					<div className="container" style={this.props.elementStyling} ref={this.props.quote}>
    						<div className="quotes">"{this.props.quote}"</div>
 						<div className="annotations">&emsp;{this.props.annotation}</div>
-						<div className="glyphicon glyphicon-trash" onClick={this.deleteAnnotation}></div>&emsp;
-						<div className="glyphicon glyphicon-pencil" onClick={this.editAnnotation}></div>
-						<div>#{this.props.channel}</div>
-         	 	   </div>
+            <button type="button" className="btn btn-default" onClick={this.deleteAnnotation}>
+              <span className="glyphicon glyphicon-trash"></span> Delete
+            </button>&emsp;
+            <button type="button" className="btn btn-default" onClick={this.editAnnotation}>
+              <span className="glyphicon glyphicon-pencil"></span> Edit
+            </button>
+            <div className="channels">#{this.props.channels.map(channel => <span className="channel">{channel}</span>)}</div>
+					</div>
             );
         }
     }
