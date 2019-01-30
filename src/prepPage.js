@@ -92,38 +92,38 @@ function registerEvents() {
       });
     });
 
-    //note: will replace the tooltip on medium articles???
-    let script =
-      "document.onselectionchange = function(){" +
-      "var editor = new MediumEditor('.editable', {\n" +
-      "    toolbar: {\n" +
-      "        /* These are the default options for the toolbar,\n" +
-      "           if nothing is passed this is what is used */\n" +
-      "        allowMultiParagraphSelection: true,\n" +
-      "        buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote'],\n" +
-      "        diffLeft: 0,\n" +
-      "        diffTop: -10,\n" +
-      "        firstButtonClass: 'medium-editor-button-first',\n" +
-      "        lastButtonClass: 'medium-editor-button-last',\n" +
-      "        relativeContainer: null,\n" +
-      "        standardizeSelectionStart: false,\n" +
-      "        static: false,\n" +
-      "        /* options which only apply when static is true */\n" +
-      "        align: 'center',\n" +
-      "        sticky: false,\n" +
-      "        updateOnEmptySelection: false\n" +
-      "    }\n" +
-      "});" +
-      "}";
-
-    let executeScriptPromise = new Promise((resolve, reject) => {
-      chrome.tabs.executeScript({
-        code: script
-      }, function (response) {                  //promise won't return anything
-        console.log("medium toolbar registered:" + response);
-        resolve(response);
-      });
-    });
+    // //note: will replace the tooltip on medium articles???
+    // let script =
+    //   "document.onselectionchange = function(){" +
+    //   "var editor = new MediumEditor('.editable', {\n" +
+    //   "    toolbar: {\n" +
+    //   "        /* These are the default options for the toolbar,\n" +
+    //   "           if nothing is passed this is what is used */\n" +
+    //   "        allowMultiParagraphSelection: true,\n" +
+    //   "        buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote'],\n" +
+    //   "        diffLeft: 0,\n" +
+    //   "        diffTop: -10,\n" +
+    //   "        firstButtonClass: 'medium-editor-button-first',\n" +
+    //   "        lastButtonClass: 'medium-editor-button-last',\n" +
+    //   "        relativeContainer: null,\n" +
+    //   "        standardizeSelectionStart: false,\n" +
+    //   "        static: false,\n" +
+    //   "        /* options which only apply when static is true */\n" +
+    //   "        align: 'center',\n" +
+    //   "        sticky: false,\n" +
+    //   "        updateOnEmptySelection: false\n" +
+    //   "    }\n" +
+    //   "});" +
+    //   "}";
+    //
+    // let executeScriptPromise = new Promise((resolve, reject) => {
+    //   chrome.tabs.executeScript({
+    //     code: script
+    //   }, function (response) {                  //promise won't return anything
+    //     console.log("medium toolbar registered:" + response);
+    //     resolve(response);
+    //   });
+    // });
   });
 
   function clickEvent(option) {                                      //need response and url in the event registration. must therefore register for each page

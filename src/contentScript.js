@@ -55,6 +55,7 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     //bootstrapJSViewport.prepend(bootstrapHTML);
 
     var mediumEditor = document.createElement('script');
+    mediumEditor.type = 'text/javascript';
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
 
     var mediumStyle = document.createElement('link');
@@ -65,7 +66,6 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     mediumStyle.href = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css';
     document.head.appendChild(jQuery);
     document.head.appendChild(bootstrapHTML);
-    document.head.appendChild(mediumEditor);
     document.head.appendChild(mediumStyle);
 
     //document.body.appendChild(bootstrapJS);
@@ -89,6 +89,28 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     document.body.appendChild(modal);
     annotationsModal(request);
 
+    document.onselectionchange = function() {
+      var editor = new MediumEditor('.editable', {
+        toolbar: {
+          /* These are the default options for the toolbar,
+             if nothing is passed this is what is used */
+          allowMultiParagraphSelection: true,
+          buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote'],
+          diffLeft: 0,
+          diffTop: -10,
+          firstButtonClass: 'medium-editor-button-first',
+          lastButtonClass: 'medium-editor-button-last',
+          relativeContainer: null,
+          standardizeSelectionStart: false,
+          static: false,
+          /* options which only apply when static is true */
+          align: 'center',
+          sticky: false,
+          updateOnEmptySelection: false
+        }
+      });
+      console.log("seletion changed");
+    };
     return true;
   }
 
