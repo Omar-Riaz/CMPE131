@@ -1,11 +1,13 @@
 export default function(){
 /**
- * THIS IS AN EVENT PAGE. PRETTY MUCH A GENERAL EVENT HANDLER.
- * GOOD FOR PAGE INITIALIZATION STUFF
+ * GENERAL PURPOSE FUNCTIONALITY THAT IS TAKEN FROM THE prepPage CONTENT SCRIPT
+ * I MIGHT NOT NEED THIS.
  */
 "use strict";
 let tabId = 0;          //dummy value
 return {
+
+
 createContextMenus: function(){
     let annotationText;
     let contextMenuProps = {
@@ -14,21 +16,7 @@ createContextMenus: function(){
         contexts: ['selection'],
         title: 'ReMedia: annotate selection'
     };
-    // let contextMenuProps2 = {
-    //     type: 'normal',
-    //     id: '2',
-    //     contexts: ['selection'],
-    //     title: 'ReMedia: view annotations'
-    // };
-    // let contextMenuProps3 = {
-    //     type: 'normal',
-    //     id: '3',
-    //     contexts: ['selection'],
-    //     title: 'ReMedia: view others annotations'
-    // };
     chrome.contextMenus.create(contextMenuProps);
-    //chrome.contextMenus.create(contextMenuProps2);
-    //chrome.contextMenus.create(contextMenuProps3);
 },
 
 // chrome.webNavigation.onCompleted.addListener((details) =>{
@@ -62,6 +50,10 @@ registerEvents: function() {
         preSaveAnnotation(null);                                //prepare the work necessary to begin saving annotations
     }
     chrome.contextMenus.onClicked.addListener(clickEvent);
+
+    function highlightEvent() {
+      generateTooltip();
+    }
 },
 
 
