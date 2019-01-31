@@ -1,4 +1,126 @@
-/******/ (function(modules) { // webpackBootstrap
+/* -------------------------------------------------- */
+
+/*  Start of Webpack Chrome Hot Extension Middleware  */
+
+/* ================================================== */
+
+/*  This will be converted into a lodash templ., any  */
+
+/*  external argument must be provided using it       */
+
+/* -------------------------------------------------- */
+(function (chrome, window) {
+  var signals = JSON.parse('{"SIGN_CHANGE":"SIGN_CHANGE","SIGN_RELOAD":"SIGN_RELOAD","SIGN_RELOADED":"SIGN_RELOADED","SIGN_LOG":"SIGN_LOG","SIGN_CONNECT":"SIGN_CONNECT"}');
+  var config = JSON.parse('{"RECONNECT_INTERVAL":2000,"SOCKET_ERR_CODE_REF":"https://tools.ietf.org/html/rfc6455#section-7.4.1"}');
+  var reloadPage = "true" === "true";
+  var wsHost = "ws://localhost:9090";
+  var SIGN_CHANGE = signals.SIGN_CHANGE,
+      SIGN_RELOAD = signals.SIGN_RELOAD,
+      SIGN_RELOADED = signals.SIGN_RELOADED,
+      SIGN_LOG = signals.SIGN_LOG,
+      SIGN_CONNECT = signals.SIGN_CONNECT;
+  var RECONNECT_INTERVAL = config.RECONNECT_INTERVAL,
+      SOCKET_ERR_CODE_REF = config.SOCKET_ERR_CODE_REF;
+  var runtime = chrome.runtime,
+      tabs = chrome.tabs;
+  var manifest = runtime.getManifest(); // =============================== Helper functions ======================================= //
+
+  var formatter = function formatter(msg) {
+    return "[ WCER: ".concat(msg, " ]");
+  };
+
+  var logger = function logger(msg) {
+    var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "info";
+    return console[level](formatter(msg));
+  };
+
+  var timeFormatter = function timeFormatter(date) {
+    return date.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
+  }; // ========================== Called only on content scripts ============================== //
+
+
+  function contentScriptWorker() {
+    runtime.sendMessage({
+      type: SIGN_CONNECT
+    }, function (msg) {
+      return console.info(msg);
+    });
+    runtime.onMessage.addListener(function (_ref) {
+      var type = _ref.type,
+          payload = _ref.payload;
+
+      switch (type) {
+        case SIGN_RELOAD:
+          logger("Detected Changes. Reloading ...");
+          reloadPage && window.location.reload();
+          break;
+
+        case SIGN_LOG:
+          console.info(payload);
+          break;
+      }
+    });
+  } // ======================== Called only on background scripts ============================= //
+
+
+  function backgroundWorker(socket) {
+    runtime.onMessage.addListener(function (action, sender, sendResponse) {
+      if (action.type === SIGN_CONNECT) {
+        sendResponse(formatter("Connected to Chrome Extension Hot Reloader"));
+      }
+    });
+    socket.addEventListener("message", function (_ref2) {
+      var data = _ref2.data;
+
+      var _JSON$parse = JSON.parse(data),
+          type = _JSON$parse.type,
+          payload = _JSON$parse.payload;
+
+      if (type === SIGN_CHANGE) {
+        tabs.query({
+          status: "complete"
+        }, function (loadedTabs) {
+          loadedTabs.forEach(function (tab) {
+            return tab.id && tabs.sendMessage(tab.id, {
+              type: SIGN_RELOAD
+            });
+          });
+          socket.send(JSON.stringify({
+            type: SIGN_RELOADED,
+            payload: formatter("".concat(timeFormatter(new Date()), " - ").concat(manifest.name, " successfully reloaded"))
+          }));
+          runtime.reload();
+        });
+      } else {
+        runtime.sendMessage({
+          type: type,
+          payload: payload
+        });
+      }
+    });
+    socket.addEventListener("close", function (_ref3) {
+      var code = _ref3.code;
+      logger("Socket connection closed. Code ".concat(code, ". See more in ").concat(SOCKET_ERR_CODE_REF), "warn");
+      var intId = setInterval(function () {
+        logger("Attempting to reconnect (tip: Check if Webpack is running)");
+        var ws = new WebSocket(wsHost);
+        ws.addEventListener("open", function () {
+          clearInterval(intId);
+          logger("Reconnected. Reloading plugin");
+          runtime.reload();
+        });
+      }, RECONNECT_INTERVAL);
+    });
+  } // ======================= Bootstraps the middleware =========================== //
+
+
+  runtime.reload ? backgroundWorker(new WebSocket(wsHost)) : contentScriptWorker();
+})(chrome, window);
+/* ----------------------------------------------- */
+
+/* End of Webpack Chrome Hot Extension Middleware  */
+
+/* ----------------------------------------------- *//******/ (function(modules) { // webpackBootstrap
 /******/ 	function hotDisposeChunk(chunkId) {
 /******/ 		delete installedChunks[chunkId];
 /******/ 	}
@@ -258,7 +380,7 @@
 /******/ 				};
 /******/ 			});
 /******/ 			hotUpdate = {};
-/******/ 			var chunkId = "annotationMap";
+/******/ 			var chunkId = "eventPage";
 /******/ 			// eslint-disable-next-line no-lone-blocks
 /******/ 			{
 /******/ 				/*globals chunkId */
@@ -788,106 +910,399 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return hotCreateRequire("./src/data_structs/annotationMap.js")(__webpack_require__.s = "./src/data_structs/annotationMap.js");
+/******/ 	return hotCreateRequire("./src/eventPage.js")(__webpack_require__.s = "./src/eventPage.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./src/data_structs/annotationMap.js":
-/*!*******************************************!*\
-  !*** ./src/data_structs/annotationMap.js ***!
-  \*******************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ "./src/eventPage.js":
+/*!**************************!*\
+  !*** ./src/eventPage.js ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; _wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return _construct(Class, arguments, _getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return _setPrototypeOf(Wrapper, Class); }; return _wrapNativeSuper(Class); }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _isNativeFunction(fn) { return Function.toString.call(fn).indexOf("[native code]") !== -1; }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-/* harmony default export */ __webpack_exports__["default"] = (function () {
-  var annotationMap =
-  /*#__PURE__*/
-  function (_Map) {
-    _inherits(annotationMap, _Map);
-
-    function annotationMap(obj) {
-      _classCallCheck(this, annotationMap);
-
-      return _possibleConstructorReturn(this, _getPrototypeOf(annotationMap).call(this, obj));
-    } //set a collection of keys to a value obj
+/**
+ * THIS IS AN EVENT PAGE. PRETTY MUCH A GENERAL EVENT HANDLER.
+ * GOOD FOR PAGE INITIALIZATION STUFF
+ */
 
 
-    _createClass(annotationMap, [{
-      key: "add",
-      value: function add(keys, value) {
-        var _this = this;
+var tabId = 0; //dummy value
 
-        keys.map(function (key) {
-          //Bad to do this??? Something about setting a collection in a loop????
-          _this.set(key, _this.get(key) == null ? new Array(value) : _this.get(key).concat(value));
-        });
-        return this;
-      }
-    }, {
-      key: "deleteAnnotation",
-      value: function deleteAnnotation(keys, field) {
-        var _this2 = this;
+function createContextMenus() {
+  var annotationText;
+  var contextMenuProps = {
+    type: 'normal',
+    id: '1',
+    contexts: ['selection'],
+    title: 'ReMedia: annotate selection'
+  };
+  var contextMenuProps2 = {
+    type: 'normal',
+    id: '2',
+    contexts: ['page'],
+    title: 'ReMedia: show mini annotater'
+  }; // let contextMenuProps2 = {
+  //     type: 'normal',
+  //     id: '2',
+  //     contexts: ['selection'],
+  //     title: 'ReMedia: view annotations'
+  // };
+  // let contextMenuProps3 = {
+  //     type: 'normal',
+  //     id: '3',
+  //     contexts: ['selection'],
+  //     title: 'ReMedia: view others annotations'
+  // };
 
-        keys.map(function (channel) {
-          _this2.set(channel, _this2.get(channel).filter(function (elem) {
-            return elem.quote != field;
-          }));
-        });
-        return this;
-      }
-    }, {
-      key: "editAnnotation",
-      value: function editAnnotation(keys, field, newField) {
-        var _this3 = this;
+  chrome.contextMenus.create(contextMenuProps);
+  chrome.contextMenus.create(contextMenuProps2); //chrome.contextMenus.create(contextMenuProps2);
+  //chrome.contextMenus.create(contextMenuProps3);
+}
 
-        keys.map(function (channel) {
-          _this3.get(channel)[_this3.get(channel).findIndex(function (elem) {
-            return elem.quote == field;
-          })].annotation = newField;
-        });
-        return this;
-      }
-    }, {
-      key: "keysAsArray",
-      value: function keysAsArray() {
-        return Array.from(this.keys());
-      }
-    }]);
+function generateTooltip() {}
 
-    return annotationMap;
-  }(_wrapNativeSuper(Map));
-});
+;
+chrome.runtime.onInstalled.addListener(function (details) {
+  createContextMenus(); //	alert(changeInfo.status);
+  //if (changeInfo.status === 'complete') {
+
+  registerEvents(); //}
+}); // chrome.webNavigation.onCompleted.addListener((details) =>{
+//     registerEvents();           //get events registered
+// });
+
+function triggerMiniModal() {
+  var tabIdPromise = new Promise(function (resolve, reject) {
+    chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    }, function (tabs) {
+      //get tab, to refer to tab ID.      WILL BREAK IF NOT KEEPING TAB IN THE SELECTED STATE
+      resolve(tabs[0].id);
+    });
+  });
+  tabIdPromise.then(function (tabId) {
+    getCurrentTabUrl().then(function (url) {
+      chrome.tabs.sendMessage(tabId, {
+        contentType: "triggerMiniModal",
+        url: url
+      }, function (response) {
+        if (response) {
+          console.log(response); //indication that content script is rendering
+        }
+      });
+    });
+  });
+}
+
+function registerEvents() {
+  //this logic needs to run after every page load
+  chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+    //NOTE: I think this runs multiple times. would be nice to only run once
+    //setup the modal window in content Script
+    var tabIdPromise = new Promise(function (resolve, reject) {
+      chrome.tabs.query({
+        active: true,
+        currentWindow: true
+      }, function (tabs) {
+        //get tab, to refer to tab ID.      WILL BREAK IF NOT KEEPING TAB IN THE SELECTED STATE
+        resolve(tabs[0].id);
+      });
+    });
+    tabIdPromise.then(function (tabId) {
+      tabId = tabId;
+      chrome.tabs.sendMessage(tabId, {
+        contentType: "create"
+      }, function (response) {
+        if (response) {
+          console.log(response); //indication that content script is rendering
+        }
+      });
+    }); // //note: will replace the tooltip on medium articles???
+    // let script =
+    //   "document.onselectionchange = function(){" +
+    //   "var editor = new MediumEditor('.editable', {\n" +
+    //   "    toolbar: {\n" +
+    //   "        /* These are the default options for the toolbar,\n" +
+    //   "           if nothing is passed this is what is used */\n" +
+    //   "        allowMultiParagraphSelection: true,\n" +
+    //   "        buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote'],\n" +
+    //   "        diffLeft: 0,\n" +
+    //   "        diffTop: -10,\n" +
+    //   "        firstButtonClass: 'medium-editor-button-first',\n" +
+    //   "        lastButtonClass: 'medium-editor-button-last',\n" +
+    //   "        relativeContainer: null,\n" +
+    //   "        standardizeSelectionStart: false,\n" +
+    //   "        static: false,\n" +
+    //   "        /* options which only apply when static is true */\n" +
+    //   "        align: 'center',\n" +
+    //   "        sticky: false,\n" +
+    //   "        updateOnEmptySelection: false\n" +
+    //   "    }\n" +
+    //   "});" +
+    //   "}";
+    //
+    // let executeScriptPromise = new Promise((resolve, reject) => {
+    //   chrome.tabs.executeScript({
+    //     code: script
+    //   }, function (response) {                  //promise won't return anything
+    //     console.log("medium toolbar registered:" + response);
+    //     resolve(response);
+    //   });
+    // });
+  });
+
+  function clickEvent(option) {
+    //need response and url in the event registration. must therefore register for each page
+    //annotationText = performAnnotate();
+    //saveAnnotation(response, annotationText);
+    var menuId = option.menuItemId;
+    if (menuId == 1) preSaveAnnotation();else if (menuId == 2) triggerMiniModal();
+  }
+
+  chrome.contextMenus.onClicked.addListener(clickEvent);
+}
+/**
+ * Get the current URL.
+ *
+ * @param {function(string)} callback called when the URL of the current tab
+ *   is found
+ */
+
+
+function getCurrentTabUrl() {
+  // Query filter to be passed to chrome.tabs.query - see
+  // https://developer.chrome.com/extensions/tabs#method-query
+  var queryInfo = {
+    active: true,
+    currentWindow: true
+  };
+  return new Promise(function (resolve, reject) {
+    chrome.tabs.query(queryInfo, function (tabs) {
+      // chrome.tabs.query invokes the callback with a list of tabs that match the
+      // query. When the popup is opened, there is certainly a window and at least
+      // one tab, so we can safely assume that |tabs| is a non-empty array.
+      // A window can only have one active tab at a time, so the array consists of
+      // exactly one tab.
+      var tab = tabs[0]; // A tab is a plain object that provides information about the tab.
+      // See https://developer.chrome.com/extensions/tabs#type-Tab
+
+      var url = tab.url; // tab.url is only available if the "activeTab" permission is declared.
+      // If you want to see the URL of other tabs (e.g. after removing active:true
+      // from |queryInfo|), then the "tabs" permission is required to see their
+      // "url" properties.
+
+      console.assert(typeof url == 'string', 'tab.url should be a string');
+      resolve(url); //callback();
+      //annotationsList(url);
+    });
+  }); // return aPromise.then(response =>{
+  //    return response;
+  // });
+}
+/**
+ * Question: can/should this go in a contentScript
+ * Loads the single selected quote in UI
+ */
+
+
+function loadQuote() {
+  //update the extension text
+  return new Promise(function (resolve, reject) {
+    var script = 'document.getSelection().toString()';
+    var annotation; // See https://developer.chrome.com/extensions/tabs#method-executeScript.
+    // chrome.tabs.executeScript allows us to programmatically inject JavaScript
+    // into a page. Since we omit the optional first argument "tabId", the script
+    // is inserted into the active tab of the current window, which serves as the
+    // default.
+
+    var executeScriptPromise = chrome.tabs.executeScript({
+      code: script
+    }, function (response) {
+      //document.getElementById("quoteText").innerHTML = response[0];
+      console.log(response[0]);
+      resolve(response[0]);
+    });
+  });
+}
+/**
+ * perform annotations on a single selected quote
+ */
+
+
+function performAnnotate() {
+  // //update the extension text
+  //  let script = 'document.getSelection().toString()';
+  //  let annotation;
+  //  // See https://developer.chrome.com/extensions/tabs#method-executeScript.
+  //  // chrome.tabs.executeScript allows us to programmatically inject JavaScript
+  //  // into a page. Since we omit the optional first argument "tabId", the script
+  //  // is inserted into the active tab of the current window, which serves as the
+  //  // default.
+  //  let executeScriptPromise = chrome.tabs.executeScript({
+  //    code: script
+  //  }, function (response){
+  //     document.getElementById("quoteText").innerHTML=response[0];
+  //     annotation = prompt("enter your annotation");
+  //     document.getElementById("annotationText").innerHTML=annotation;
+  //     return annotation;
+  //  });
+  var annotation = prompt("enter your annotation"); //document.getElementById("annotationText").innerHTML = annotation;
+
+  return annotation;
+}
+/**
+ * Gets the saved annotation for url.
+ *
+ * @param {string} url URL whose annotations are to be retrieved.
+ * @param {function(string)} callback called with the saved annotations for
+ *     the given url on success, or a falsy value if no annotations are retrieved.
+ */
+
+
+function getSavedAnnotations(url) {
+  // See https://developer.chrome.com/apps/storage#type-StorageArea. We check
+  // for chrome.runtime.lastError to ensure correctness even when the API call
+  // fails.
+  // chrome.storage.sync.get(url, (items) => {
+  //   callback(chrome.runtime.lastError ? null : items[url]);
+  // });
+  return new Promise(function (resolve, reject) {
+    console.log(url);
+    chrome.storage.sync.get(url, function (urlObject) {
+      //console.log(urlObject.annotations);
+
+      /*ANNOTATION STRUCTURE:
+        "url":{
+          "quote1": {//annotation + other data}
+          "quote2": {//annotation + other data}
+        }
+      */
+      resolve(chrome.runtime.lastError ? null : urlObject[url]);
+    });
+  });
+}
+/**
+ * Sets the annotations for url of current page.
+ *
+ * @param {string} url URL for page of which contains the annotations that are to be saved.
+ * @param {string} quoteText The quote to be saved.
+ * @param {string} annotationText The annotation to be saved
+ */
+
+
+function saveAnnotation(url, quoteText, annotationText) {
+  if (!quoteText || !annotationText) return; //don't do anything if annotation invalid
+
+  /*chrome.storage.sync.get(url, result => {
+      let items = result;
+        let annotationObject = {                                //new Object representing annotation metadata to add to annotations
+          quoteText: quoteText,
+          annotationText: annotationText
+      };
+    let annotationsArray = [];
+    annotationsArray.push(annotationObject);
+      if(Object.values(items)[0])               //include previous annotations if they exist. the 0 property comes from chrome API--> adds an integer key to all thing u save
+  annotationsArray = annotationsArray.concat(Object.values(items)[]);
+    //annotationsArray.push(annotationObject);                //include the new annotation
+      items = {["" + url]: {                                  //"recreate" the key-value object to store in chrome storage (key is the url)
+          annotations: annotationsArray
+      }};
+        // console.log(items);
+      chrome.storage.sync.set(items, ()=>{
+        });                         //save onto chrome storage
+  });*/
+
+  var items = {};
+  items[url] = [];
+  items[url][quoteText] = {};
+  items[url][quoteText].annotation = annotationText;
+  chrome.storage.sync.set(items[url][quoteText], function () {
+    annotationsList(url);
+  });
+}
+/*
+function saveAnnotations(annotations) {
+annotationsArray = annotationsArray.concat(Object.values(items)[0].annotations);
+//annotationsArray.push(annotationObject);                //include the new annotation
+let items =
+items = {["" + url]: {                                  //"recreate" the key-value object to store in chrome storage (key is the url)
+annotations: annotationsArray
+}};
+//console.log(items);
+chrome.storage.sync.set(items, ()=>{
+
+});                         //save onto chrome storage
+}*/
+// This extension loads the saved annotations for the current tab if one
+// exists. The chrome.storage API is used for this purpose. This is different
+// from the window.localStorage API, which is synchronous and stores data bound
+// to a document's origin. Also, using chrome.storage.sync instead of
+// chrome.storage.local allows the extension data to be synced across multiple
+// user devices.
+
+
+function preSaveAnnotation() {
+  // let quoteText = loadQuote();
+  // let annotationText;
+  // let annotations = [];
+  // let url = getCurrentTabUrl();
+  // if(!previousAnnotation) quotePromise = loadQuote();
+  var theQuote = "";
+  var annotationText;
+  var annotations = [];
+  var urlPromise = getCurrentTabUrl();
+  var theUrl;
+  urlPromise.then(function (url) {
+    //get Url of current selected tab
+    theUrl = url;
+    var quotePromise = loadQuote();
+    quotePromise.then(function (quote) {
+      theQuote = quote;
+    });
+    getSavedAnnotations(theUrl);
+  }).then(function (savedAnnotations) {
+    //ask for user input, save it as annotation and display the modal
+    // annotationText = performAnnotate();
+    //saveAnnotation(theUrl, theQuote, annotationText);
+    console.log("about to render modal");
+    var tabIdPromise = new Promise(function (resolve, reject) {
+      //Promise wrapper needed to force synch. behaviour
+      chrome.tabs.query({
+        active: true,
+        currentWindow: true
+      }, function (tabs) {
+        //get tab, to refer to tab ID.      WILL BREAK IF NOT KEEPING TAB IN THE SELECTED STATE
+        resolve(tabs[0].id);
+      });
+    });
+    tabIdPromise.then(function (tabId) {
+      chrome.tabs.sendMessage(tabId, {
+        contentType: "url",
+        quoteText: theQuote,
+        url: theUrl
+      }, function (response) {
+        if (response) {
+          console.log(response); //indication that content script is rendering
+        }
+      });
+    });
+  });
+} //Find an annotation by its quote, from the currently saved annotations
+
+
+function findAnnotation(quoteText) {
+  var annotations = annotationFunctions.getSavedAnnotations();
+  var theNewAnnotations = annotations.filter(function (annotation) {
+    if (annotation.quoteText === quoteText) return annotation;
+  });
+  return theNewAnnotations[0];
+}
 
 /***/ })
 
 /******/ });
-//# sourceMappingURL=annotationMap.bundle.js.map
+//# sourceMappingURL=eventPage.bundle.js.map

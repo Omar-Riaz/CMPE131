@@ -12,9 +12,16 @@ module.exports = {
     annotations_modal: './src/annotations_modal.js',
     annotationFunctions: "./src/annotationFunctions.js",
     annotationMap: "./src/data_structs/annotationMap.js",
-    prepPage: "./src/prepPage.js",
+    eventPage: "./src/eventPage.js",
     contentScript: "./src/contentScript.js",
+    background: "./src/background.js",
     annotations_mini_modal: './src/annotations_mini_modal.js'
+  },
+  mode: "development",
+  devtool: "cheap-module-source-map",
+  devServer: {
+    contentBase: './build',
+    hot: true
   },
   output: {
     path: path.resolve(__dirname, 'build'),
@@ -46,7 +53,14 @@ module.exports = {
       { from: './src/manifest.json' },
       { context: './src/assets', from: 'icon-**', to: 'assets' }
     ]),
-    new WebpackNotifierPlugin({alwaysNotify: true}),
-    new ChromeExtensionReloader()
+    new webpack.HotModuleReplacementPlugin(),
+    new ChromeExtensionReloader({
+      port: 9090, // Which port use to create the server
+      reloadPage: true, // Force the reload of the page also
+      entries: { // The entries used for the content/background scripts
+        contentScript: 'contentScript', // Use the entry names, not the file name or the path
+        background: 'eventPage' // *REQUIRED
+      }
+    })
   ]
 };

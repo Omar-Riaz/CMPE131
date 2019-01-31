@@ -14,7 +14,7 @@
    ],
 
   "background": {
-    "scripts": ["prepPage.bundle.js"],
+    "scripts": ["eventPage.bundle.js"],
     "persistent": false
   },
 

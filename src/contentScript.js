@@ -12,23 +12,6 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
 
     sendResponse({content: "creating modal"});
 
-    //for testing purposes!
-    // chrome.storage.sync.clear();
-    // console.log("chrome storage cleared");
-
-    /* var jQuery = document.createElement('script');
-     //jQuery.type = 'text/javascript';
-     jQuery.setAttribute('src', "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js");
-     document.head.appendChild(jQuery); */
-
-
-    //include JS and HTML bootstrap
-    /*var bootstrapHTML = document.createElement('link');
-    bootstrapHTML.setAttribute('rel', 'stylesheet');
-    bootstrapHTML.setAttribute('href','https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css');
-    document.head.appendChild(bootstrapHTML); */
-
-
 
     var jQuery = document.createElement('script');
     jQuery.type = 'text/javascript';
@@ -68,17 +51,6 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     document.head.appendChild(bootstrapHTML);
     document.head.appendChild(mediumStyle);
 
-    //document.body.appendChild(bootstrapJS);
-
-
-    //modal.style.display = "none";                                                    //set to no display by default
-    //        document.body.appendChild(modal);                   //add to HTML body of page
-
-    //setup listeners for closing the modal
-    /*
-          modalChildSpan.onclick = () => {           //close if press the x
-              modal.style.display = "none";
-    };*/
     let miniModal = document.createElement('div');
     miniModal.setAttribute('id', 'annotationMiniModal');
     document.body.appendChild(miniModal);
@@ -90,26 +62,8 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     annotationsModal(request);
 
     document.onselectionchange = function() {
-      var editor = new MediumEditor('.editable', {
-        toolbar: {
-          /* These are the default options for the toolbar,
-             if nothing is passed this is what is used */
-          allowMultiParagraphSelection: true,
-          buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote'],
-          diffLeft: 0,
-          diffTop: -10,
-          firstButtonClass: 'medium-editor-button-first',
-          lastButtonClass: 'medium-editor-button-last',
-          relativeContainer: null,
-          standardizeSelectionStart: false,
-          static: false,
-          /* options which only apply when static is true */
-          align: 'center',
-          sticky: false,
-          updateOnEmptySelection: false
-        }
-      });
-      console.log("seletion changed");
+      var editor = new MediumEditor('.editable');
+      console.log("selection changed");
     };
     return true;
   }

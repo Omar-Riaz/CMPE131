@@ -13,7 +13,7 @@ module.exports = {
     annotations_list: './src/annotations_list.js',
     annotations_modal: './src/annotations_modal.js',
     annotationFunctions: "./src/annotationFunctions.js",
-    prepPage: "./src/prepPage.js",
+    eventPage: "./src/eventPage.js",
     contentScript: "./src/contentScript.js",
     annotations_mini_modal: './src/annotations_mini_modal.js'
   },
