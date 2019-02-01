@@ -4,7 +4,7 @@ const annotationsModal = require('./annotations_modal').default;
 const annotationsMiniModal = require('./annotations_mini_modal').default;
 const ReactDOM = require('react-dom');
 const React = require('react');
-const MediumEditor = require('medium-editor');
+// const MediumEditor = require('medium-editor');
 
 //listener for events
 chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
@@ -38,7 +38,6 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     //bootstrapJSViewport.prepend(bootstrapHTML);
 
     var mediumEditor = document.createElement('script');
-    mediumEditor.type = 'text/javascript';
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
 
     var mediumStyle = document.createElement('link');
@@ -47,9 +46,10 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     mediumStyle.charset = 'utf-8';
     mediumStyle.media = 'screen';
     mediumStyle.href = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css';
-    document.head.appendChild(jQuery);
-    document.head.appendChild(bootstrapHTML);
-    document.head.appendChild(mediumStyle);
+    document.body.appendChild(jQuery);
+    document.body.appendChild(bootstrapHTML);
+    document.body.appendChild(mediumEditor);
+    document.body.appendChild(mediumStyle);
 
     let miniModal = document.createElement('div');
     miniModal.setAttribute('id', 'annotationMiniModal');
@@ -61,10 +61,27 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     document.body.appendChild(modal);
     annotationsModal(request);
 
-    document.onselectionchange = function() {
-      var editor = new MediumEditor('.editable');
-      console.log("selection changed");
-    };
+    // document.onselectionchange = function() {
+    // };
+
+    // console.log("selection changed");
+
+    //wrap the body in a div to allow tooltip to work
+    var editableWrap = document.createElement('div');
+    editableWrap.className = 'editable';
+    // Move the body's children into this wrapper
+    while (document.body.firstChild)
+    {
+      editableWrap.appendChild(document.body.firstChild);
+      console.log('cycle');
+    }
+
+// Append the wrapper to the body
+    document.body.appendChild(editableWrap);
+    var editorScript = document.createElement('script');
+    editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
+    document.body.appendChild(editorScript);
+
     return true;
   }
 
