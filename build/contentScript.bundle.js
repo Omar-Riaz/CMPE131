@@ -185,7 +185,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "f8db010ba58b54a95585";
+/******/ 	var hotCurrentHash = "89d2e27bfb3d5bbb1e74";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -25348,24 +25348,13 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
     });
     var jQuery = document.createElement('script');
     jQuery.type = 'text/javascript';
-    jQuery.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"; //const jQueryViewport = document.getElementById('body');
-    //jQueryViewport.prepend(jQuery);
-
+    jQuery.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js";
     var bootstrapHTML = document.createElement('link');
     bootstrapHTML.rel = 'stylesheet';
-    bootstrapHTML.href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"; //const bootstrapHTMLViewport = document.getElementById('body');
-    //bootstrapHTMLViewport.prepend(bootstrapHTML);
-
-    /*var bootstrapJS = document.createElement('script');
-    //bootstrapJS.type = 'text/javascript';
-    jQuery.setAttribute('src', "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js");
-    document.head.appendChild(bootstrapJS); */
-
+    bootstrapHTML.href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
     var bootstrapJS = document.createElement('script');
     bootstrapJS.type = 'text/javascript';
-    bootstrapJS.src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"; //const bootstrapJSViewport = document.getElementById('body');
-    //bootstrapJSViewport.prepend(bootstrapHTML);
-
+    bootstrapJS.src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js";
     var mediumEditor = document.createElement('script');
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
 
@@ -25392,17 +25381,13 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
     var modal = document.createElement('div');
     modal.setAttribute('id', 'annotationModal');
     document.body.appendChild(modal);
-    annotationsModal(request); // document.onselectionchange = function() {
-    // };
-    // console.log("selection changed");
-    //wrap the body in a div to allow tooltip to work
+    annotationsModal(request); //wrap the body in a div to allow tooltip to work
 
     var editableWrap = document.createElement('div');
     editableWrap.className = 'editable'; // Move the body's children into this wrapper
 
     while (document.body.firstChild) {
       editableWrap.appendChild(document.body.firstChild);
-      console.log('cycle');
     } // Append the wrapper to the body
 
 
