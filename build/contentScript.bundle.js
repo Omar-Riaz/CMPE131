@@ -185,7 +185,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "4233edc69f0f5afab959";
+/******/ 	var hotCurrentHash = "f8db010ba58b54a95585";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -25368,6 +25368,13 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
 
     var mediumEditor = document.createElement('script');
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
+
+    mediumEditor.onload = function () {
+      var editorScript = document.createElement('script');
+      editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
+      document.body.appendChild(editorScript);
+    };
+
     var mediumStyle = document.createElement('link');
     mediumStyle.rel = 'stylesheet';
     mediumStyle.type = 'text/css';
@@ -25400,9 +25407,6 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
 
 
     document.body.appendChild(editableWrap);
-    var editorScript = document.createElement('script');
-    editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
-    document.body.appendChild(editorScript);
     return true;
   } else if (request.contentType === "triggerMiniModal") {
     sendResponse({

@@ -39,6 +39,11 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
 
     var mediumEditor = document.createElement('script');
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
+    mediumEditor.onload = function() {
+      var editorScript = document.createElement('script');
+      editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
+      document.body.appendChild(editorScript);
+    };
 
     var mediumStyle = document.createElement('link');
     mediumStyle.rel = 'stylesheet';
@@ -78,9 +83,7 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
 
 // Append the wrapper to the body
     document.body.appendChild(editableWrap);
-    var editorScript = document.createElement('script');
-    editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
-    document.body.appendChild(editorScript);
+
 
     return true;
   }
