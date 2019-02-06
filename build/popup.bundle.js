@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "3539de126f5778a4dbb1";
+/******/ 	var hotCurrentHash = "6def191e0963378670ca";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -28076,6 +28076,7 @@ var annotationFunctions = __webpack_require__(/*! ./annotationFunctions */ "./sr
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return annotationMap; });
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -28102,64 +28103,64 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
-/* harmony default export */ __webpack_exports__["default"] = (function () {
-  var annotationMap =
-  /*#__PURE__*/
-  function (_Map) {
-    _inherits(annotationMap, _Map);
+var annotationMap =
+/*#__PURE__*/
+function (_Map) {
+  _inherits(annotationMap, _Map);
 
-    function annotationMap(obj) {
-      _classCallCheck(this, annotationMap);
+  function annotationMap(obj) {
+    _classCallCheck(this, annotationMap);
 
-      return _possibleConstructorReturn(this, _getPrototypeOf(annotationMap).call(this, obj));
-    } //set a collection of keys to a value obj
+    return _possibleConstructorReturn(this, _getPrototypeOf(annotationMap).call(this, obj));
+  } //set a collection of keys to a value obj
 
 
-    _createClass(annotationMap, [{
-      key: "add",
-      value: function add(keys, value) {
-        var _this = this;
+  _createClass(annotationMap, [{
+    key: "add",
+    value: function add(keys, value) {
+      var _this = this;
 
-        keys.map(function (key) {
-          //Bad to do this??? Something about setting a collection in a loop????
-          _this.set(key, _this.get(key) == null ? new Array(value) : _this.get(key).concat(value));
-        });
-        return this;
-      }
-    }, {
-      key: "deleteAnnotation",
-      value: function deleteAnnotation(keys, field) {
-        var _this2 = this;
+      keys.map(function (key) {
+        //Bad to do this??? Something about setting a collection in a loop????
+        _this.set(key, _this.get(key) == null ? new Array(value) : _this.get(key).concat(value));
+      });
+      return this;
+    }
+  }, {
+    key: "deleteAnnotation",
+    value: function deleteAnnotation(keys, field) {
+      var _this2 = this;
 
-        keys.map(function (channel) {
-          _this2.set(channel, _this2.get(channel).filter(function (elem) {
-            return elem.quote != field;
-          }));
-        });
-        return this;
-      }
-    }, {
-      key: "editAnnotation",
-      value: function editAnnotation(keys, field, newField) {
-        var _this3 = this;
+      keys.map(function (channel) {
+        _this2.set(channel, _this2.get(channel).filter(function (elem) {
+          return elem.quote != field;
+        }));
+      });
+      return this;
+    }
+  }, {
+    key: "editAnnotation",
+    value: function editAnnotation(keys, field, newField) {
+      var _this3 = this;
 
-        keys.map(function (channel) {
-          _this3.get(channel)[_this3.get(channel).findIndex(function (elem) {
-            return elem.quote == field;
-          })].annotation = newField;
-        });
-        return this;
-      }
-    }, {
-      key: "keysAsArray",
-      value: function keysAsArray() {
-        return Array.from(this.keys());
-      }
-    }]);
+      keys.map(function (channel) {
+        _this3.get(channel)[_this3.get(channel).findIndex(function (elem) {
+          return elem.quote == field;
+        })].annotation = newField;
+      });
+      return this;
+    }
+  }, {
+    key: "keysAsArray",
+    value: function keysAsArray() {
+      return Array.from(this.keys());
+    }
+  }]);
 
-    return annotationMap;
-  }(_wrapNativeSuper(Map));
-});
+  return annotationMap;
+}(_wrapNativeSuper(Map));
+
+
 
 /***/ }),
 

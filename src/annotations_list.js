@@ -5,7 +5,6 @@ const annotationModal = require('./annotations_modal.js');
 import annotationMap from './data_structs/annotationMap';
 import Autosuggest from 'react-autosuggest';
 
-
 function isEmptyObject(obj){
   return obj == null || (Object.keys(obj).length === 0 && obj.constructor === Object)
 }

@@ -1,5 +1,4 @@
-export default function() {
-  class annotationMap extends Map<String, Array> {
+export default class annotationMap extends Map<String, Array> {
     constructor(obj){
       super(obj);
     }
@@ -25,5 +24,4 @@ export default function() {
     keysAsArray() {
       return Array.from(this.keys());
     }
-  }
 }
