@@ -30,7 +30,9 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
     mediumEditor.onload = function() {
       var editorScript = document.createElement('script');
-      editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
+      editorScript.innerHTML = "var editor = new MediumEditor('.editable', {" +
+        "disableEditing: true" +
+        "});";
       document.body.appendChild(editorScript);
     };
 
@@ -42,8 +44,8 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     mediumStyle.href = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css';
     // document.body.appendChild(jQuery);
     // document.body.appendChild(bootstrapHTML);
-    // document.body.appendChild(mediumEditor);
-    // document.body.appendChild(mediumStyle);
+    document.body.appendChild(mediumEditor);
+    document.body.appendChild(mediumStyle);
 
     let miniModal = document.createElement('div');
     miniModal.setAttribute('id', 'annotationMiniModal');
@@ -60,22 +62,13 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     aFrame.id = "script-loading-frame";
     // aFrame.appendChild(jQuery);
     // aFrame.appendChild(bootstrapHTML);
-    aFrame.appendChild(mediumEditor);
-    aFrame.appendChild(mediumStyle);
-    document.body.appendChild(aFrame);
+   // aFrame.appendChild(mediumEditor);
+   //  aFrame.appendChild(mediumStyle);
+   //  document.body.appendChild(aFrame);
 
 
-    //wrap the body in a div to allow tooltip to work
-    var editableWrap = document.createElement('div');
-    editableWrap.className = 'editable';
-    // Move the body's children into this wrapper
-    while (document.body.firstChild)
-    {
-      editableWrap.appendChild(document.body.firstChild);
-    }
-
-// Append the wrapper to the body
-    document.body.appendChild(editableWrap);
+    //allow medium editor to be used on the page
+    document.body.className += " editable";
 
 
     return true;

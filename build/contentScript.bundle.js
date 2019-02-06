@@ -185,7 +185,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "90a90099c702936be3d5";
+/******/ 	var hotCurrentHash = "3539de126f5778a4dbb1";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -31115,7 +31115,7 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
 
     mediumEditor.onload = function () {
       var editorScript = document.createElement('script');
-      editorScript.innerHTML = "var editor = new MediumEditor('.editable');";
+      editorScript.innerHTML = "var editor = new MediumEditor('.editable', {" + "disableEditing: true" + "});";
       document.body.appendChild(editorScript);
     };
 
@@ -31126,9 +31126,9 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
     mediumStyle.media = 'screen';
     mediumStyle.href = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css'; // document.body.appendChild(jQuery);
     // document.body.appendChild(bootstrapHTML);
-    // document.body.appendChild(mediumEditor);
-    // document.body.appendChild(mediumStyle);
 
+    document.body.appendChild(mediumEditor);
+    document.body.appendChild(mediumStyle);
     var miniModal = document.createElement('div');
     miniModal.setAttribute('id', 'annotationMiniModal');
     document.body.appendChild(miniModal);
@@ -31141,20 +31141,12 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
     var aFrame = document.createElement('iframe');
     aFrame.id = "script-loading-frame"; // aFrame.appendChild(jQuery);
     // aFrame.appendChild(bootstrapHTML);
+    // aFrame.appendChild(mediumEditor);
+    //  aFrame.appendChild(mediumStyle);
+    //  document.body.appendChild(aFrame);
+    //allow medium editor to be used on the page
 
-    aFrame.appendChild(mediumEditor);
-    aFrame.appendChild(mediumStyle);
-    document.body.appendChild(aFrame); //wrap the body in a div to allow tooltip to work
-
-    var editableWrap = document.createElement('div');
-    editableWrap.className = 'editable'; // Move the body's children into this wrapper
-
-    while (document.body.firstChild) {
-      editableWrap.appendChild(document.body.firstChild);
-    } // Append the wrapper to the body
-
-
-    document.body.appendChild(editableWrap);
+    document.body.className += " editable";
     return true;
   } else if (request.contentType === "triggerMiniModal") {
     sendResponse({
