@@ -56,7 +56,7 @@ export default function (request) {
 
 	    
         render() {               //rendering a single annotationObject for each element in annotationObjects
-			const modalStyle = {
+				const modalStyle = {
 				display: "none"
 			};
 			const miniModalListStyle = {
@@ -69,7 +69,7 @@ export default function (request) {
 			};
 
 			return(
-				<div><Draggable>		
+				<div><Draggable>
 					<div id="parentMiniModal" refs="parentMiniModal" className="miniModal" style={modalStyle}>
 							<div className="miniModal-content">
 							<span onClick={this.handleClickSpan}></span>

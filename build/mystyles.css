@@ -28,7 +28,6 @@
     width: 30%; /* Full width */
     height: 10%; /* Full height */
     overflow: none; /* Enable scroll if needed */
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
     animation-name: animatetop;
@@ -37,7 +36,7 @@
 
 /* Add Animation */
 @-webkit-keyframes animatetop {
-    from {top:-300px; opacity:0} 
+    from {top:-300px; opacity:0}
     to {top:0; opacity:1}
 }
 
@@ -45,6 +44,7 @@
     from {top:-300px; opacity:0}
     to {top:0; opacity:1}
 }
+
 
 /* Modal Content/Box */
 .modal-content {
@@ -56,7 +56,6 @@
 
 .miniModal-content {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
     padding: 20px;
     border: 1px solid #888;
     width: auto; /* Could be more or less, depending on screen size */
