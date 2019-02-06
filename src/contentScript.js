@@ -13,18 +13,18 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({content: "creating modal"});
 
 
-    var jQuery = document.createElement('script');
-    jQuery.type = 'text/javascript';
-    jQuery.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js";
+    // var jQuery = document.createElement('script');
+    // jQuery.type = 'text/javascript';
+    // jQuery.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js";
 
-    var bootstrapHTML = document.createElement('link');
-    bootstrapHTML.rel = 'stylesheet';
-    bootstrapHTML.href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
-
-
-    var bootstrapJS = document.createElement('script');
-    bootstrapJS.type = 'text/javascript';
-    bootstrapJS.src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js";
+    // var bootstrapHTML = document.createElement('link');
+    // bootstrapHTML.rel = 'stylesheet';
+    // bootstrapHTML.href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
+    //
+    //
+    // var bootstrapJS = document.createElement('script');
+    // bootstrapJS.type = 'text/javascript';
+    // bootstrapJS.src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js";
 
     var mediumEditor = document.createElement('script');
     mediumEditor.src = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js';
@@ -40,10 +40,10 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     mediumStyle.charset = 'utf-8';
     mediumStyle.media = 'screen';
     mediumStyle.href = '//cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css';
-    document.body.appendChild(jQuery);
-    document.body.appendChild(bootstrapHTML);
-    document.body.appendChild(mediumEditor);
-    document.body.appendChild(mediumStyle);
+    // document.body.appendChild(jQuery);
+    // document.body.appendChild(bootstrapHTML);
+    // document.body.appendChild(mediumEditor);
+    // document.body.appendChild(mediumStyle);
 
     let miniModal = document.createElement('div');
     miniModal.setAttribute('id', 'annotationMiniModal');
@@ -54,6 +54,16 @@ chrome.extension.onMessage.addListener((request, sender, sendResponse) => {
     modal.setAttribute('id', 'annotationModal');
     document.body.appendChild(modal);
     annotationsModal(request);
+
+    //load the scripts into this iframe
+    let aFrame = document.createElement('iframe');
+    aFrame.id = "script-loading-frame";
+    // aFrame.appendChild(jQuery);
+    // aFrame.appendChild(bootstrapHTML);
+    aFrame.appendChild(mediumEditor);
+    aFrame.appendChild(mediumStyle);
+    document.body.appendChild(aFrame);
+
 
     //wrap the body in a div to allow tooltip to work
     var editableWrap = document.createElement('div');

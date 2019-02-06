@@ -9,7 +9,7 @@
      {
        "matches": ["*://*/*", "http://*/*", "https://*/*"],
        "css": ["mystyles.css"],
-       "js": ["contentScript.bundle.js"]
+       "js": ["contentScript.bundle.js", "jQuery-3.2.1.js"]
      }
    ],
 
